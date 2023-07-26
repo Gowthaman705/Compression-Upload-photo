@@ -1,0 +1,107 @@
+@isTest
+public class JobsheetControllerTest{
+
+  @isTest static void test1()
+  {    
+        Test.setMock(HttpCalloutMock.class, new MockAuthHttpResponseGenerator()); 
+        
+        Xero_Settings__c xs = new Xero_Settings__c();
+        xs.name='Testing';
+        xs.Certificate_Name__c='XeroCertificate';
+        xs.Consumer_Key__c='N7SMN1YQVDXQRHCNQAABXGRB3DJC6N';
+        xs.Customer_Sync_Interval__c='';
+        xs.Endpoint__c='https://api.xero.com/api.xro/2.0/Organisation';
+        xs.Invoice_Sync_Interval__c='1';
+        xs.Password__c='';
+        xs.Product_Sync_Interval__c='1';
+        xs.Tax_Sync_Interval__c='1';
+        xs.User_Name__c='Test';
+        insert xs;
+        
+        Active_Trigger__c ac =new Active_Trigger__c();
+        ac.name='AccountTrigger';
+        ac.IsActive__c=true;
+        insert ac;
+        
+        account acc1=new account();
+        acc1.name='Metropolitan Thames Valley';
+        Id stExam = Schema.SObjectType.account.getRecordTypeInfosByName().get('Customer').getRecordTypeId();
+        acc1.RecordTypeId=stExam;
+        insert acc1;
+      
+        account Acct = new account();
+        Acct.Name = 'Curo Group';
+        Acct.SIC_Code__c = 'BO123';
+        insert Acct;
+      
+        account acc=new account();
+        acc.name='Test metropoliten site';
+        acc.ParentId=acc1.id;
+        insert acc;
+        Contact con = new Contact(LastName ='testCon',AccountId = acc.Id);
+        insert con;
+        
+        fax__Service_Term__c st=new fax__Service_Term__c();
+        st.fax__Type__c='Training';
+        st.fax__Site__c=acc1.id;
+        st.fax__Start_Date__c=system.today();
+        st.fax__End_Date__c=system.today()+5;
+        st.fax__Status__c='completed';
+        st.fax__Standard_Call_Out_Charge__c=1;
+        st.fax__OOH_Call_Out_Charge__c=2;
+        insert st;
+        
+        
+        fax__Work_Calendar__c wc=new fax__Work_Calendar__c();
+        wc.name='test calender';
+        insert wc;
+        
+        fax__Service_Engineer__c se=new fax__Service_Engineer__c();
+        se.Name='test eng';
+        se.fax__Work_Calendar__c=wc.id;
+        insert se; 
+        
+        fax__Visit__c  visit=new fax__Visit__c();
+        visit.fax__Site__c=acc.id;
+        visit.fax__Status__c='completed'; 
+        visit.fax__Visit_Type__c='Service';
+        visit.fax__Service_Term__c=st.id;
+        visit.Call_Out_Type__c='Call Out';
+        visit.fax__Service_Engineer__c=se.id;
+        visit.fax__Planned_Visit_Date_Time__c=datetime.newInstance(2014, 9, 15, 12, 30, 0);
+        visit.fax__Actual_Visit_Date_Time__c=datetime.newInstance(2014, 9, 15, 12, 30, 0);
+        visit.fax__Completion_Date_Time__c =datetime.newInstance(2014, 10, 15, 12, 30, 0);
+        visit.Purchase_order__c = '12345';
+        
+        insert visit;
+        
+        fax__Job_Type__c jobtype=new fax__Job_Type__c();
+        jobtype.name='Test Job type';
+        insert jobtype;
+        
+        fax__Inspection__c insp=new fax__Inspection__c();
+        insp.name='test';
+        insp.fax__Job_Type__c=jobtype.id;
+        insp.Qty__c=1;
+        insert insp; 
+        
+        Assigned_Type_Service__c ast=new Assigned_Type_Service__c();
+        ast.Job_Type__c=jobtype.id;
+        ast.Type_Serviced__c='O/C Zone Monitoring';
+        insert ast;
+        
+        fax__Service_Report__c jobsheet=new fax__Service_Report__c();
+        jobsheet.RecordTypeid=Schema.SObjectType.fax__Service_Report__c.getRecordTypeInfosByName().get('Fire Alarm and Emergency Lighting').getRecordTypeId();
+        jobsheet.Site__c=acc.id;
+        jobsheet.fax__Visit__c=visit.id;
+        jobsheet.fax__Job_Type__c=jobtype.id;
+        jobsheet.fax__Job_Start_Time__c=system.now();
+        insert jobsheet;
+
+      
+        ApexPages.StandardController sc = new ApexPages.standardController(jobsheet);
+        ApexPages.CurrentPage().getParameters().put('id',jobsheet.ID);
+        JobsheetController Controller1=new JobsheetController(sc);
+         
+    }
+}
