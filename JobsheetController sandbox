@@ -1,0 +1,63 @@
+public class JobsheetController {
+    public id Jobsheetpreview;
+    public fax__Service_Report__c preview;    
+    public Account Accpreview;
+    public JobsheetController(ApexPages.StandardController controller){
+        Jobsheetpreview=ApexPages.CurrentPage().getParameters().get('id');
+         
+        Accpreview=[SELECT Id, Name FROM Account where Name = 'Curo Group' limit 1] ;
+        preview=[SELECT ID,fax__Job_Start_Time__c,Client_Name1__c,fax__Visit__r.Purchase_order__c,fax__Visit__r.fax__Actual_Visit_Date_Time__c,Inspection_Types__c,Job_Start__c,Site__r.ShippingStreet,Site__r.Name,Print_Name__c   FROM fax__Service_Report__c WHERE ID=:Jobsheetpreview limit 1];
+        List<String> accid = Label.Account_Name.split(',');
+     //   String Str =preview.fax__Visit__r.fax__Actual_Visit_Date_Time__c;
+     //   convert to Datetime to String 
+        string s = string.valueOfGmt(preview.fax__Visit__r.fax__Actual_Visit_Date_Time__c);
+
+        String formatted=preview.fax__Job_Start_Time__c.format('dd-MM-yyyy');
+        String formatted1=preview.fax__Job_Start_Time__c.format('dd-MM-yyyy HH:mm');
+        system.debug('show'+formatted);
+        system.debug('datetime'+formatted1);
+      //  System.debug('str'+ dt);
+        String Str1 = formatted.replaceAll('-', '');
+        String Str2 = String.valueOf(Str1);
+        String  Str3 = Str2.reverse();
+     System.debug('Str2'+Str2);
+        
+        System.debug('Str3'+Str3);
+        System.debug('Replace'+s.replaceAll('-', '')+Str1+'Str1');
+        System.debug(accid);
+        System.debug(preview.Site__r.Name);
+        if(Accpreview.Name == preview.Client_Name1__c)
+        {
+           string pdfname=preview.fax__Visit__r.Purchase_order__c;
+            pdfname=pdfname.replace(',',' ');          
+            Apexpages.currentPage().getHeaders().put('content-disposition', 'inline; filename='+pdfname);
+            System.debug('pdfname'+pdfname);   
+            system.debug('pdf name check'+pdfname);
+         
+         }
+    else
+        {
+            string pdfname=preview.Site__r.Name+'_'+String.valueOf(preview.Job_Start__c).removeEnd('00:00:00')+'_'+preview.Inspection_Types__c+'.pdf'; //'.pdf%2E%70%64%66'
+            pdfname=pdfname.replace(',',' ');          
+            Apexpages.currentPage().getHeaders().put('content-disposition', 'inline; filename='+pdfname);                       
+        }
+        System.debug('1'+preview);
+    }
+    
+    
+      @AuraEnabled
+    public static void createJobsheetAttachment(String recordId, String fileName, String fileData, string filetype) {
+        // Retrieve the Job Sheet record
+       // fax__Service_Report__c sheet = [SELECT Id FROM fax__Service_Report__c WHERE Id = :sheetId];
+        
+        // Create a new Attachment record
+        Attachment attachment = new Attachment();
+        attachment.ParentId = recordId;
+        attachment.Name = fileName;
+        attachment.Body = EncodingUtil.base64Decode(fileData);
+        attachment.ContentType = filetype; // Set the appropriate content type
+        
+        // Insert the Attachment record
+        insert attachment;
+    }
+}
