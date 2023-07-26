@@ -1,0 +1,38 @@
+<aura:component controller="JobsheetController" implements="force:appHostable,force:hasRecordId,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,force:lightningQuickAction" access="global" >
+    <aura:attribute name="compressedImageData" type="String" />
+    <aura:attribute name="fileName" type="String" />
+    <aura:attribute name="fileType" type="String" />
+    <aura:attribute name="radioValue" type="String" default=""/>
+    <aura:attribute name="newfile" type="Boolean" default="false"/>
+	<aura:attribute name="options" type="List" default="[
+        {'label': 'Yes', 'value': 'Yes'},
+        {'label': 'No', 'value': 'No'}
+        ]"/>
+    
+      
+    
+   <aura:if isTrue="{!!v.newfile}">
+       <lightning:input aura:id="fileInput" onchange="{!c.handleFileChange}" type="file" name="file"  multiple="false"/>
+       <br/>
+       <lightning:radioGroup name="radioGroup"
+                             label="You Want to rename the File name?"
+                             options="{! v.options }"
+                             value="{!v.radioValue}"
+                             type="radio" />	
+   
+       <aura:if isTrue="{!v.radioValue == 'Yes'}">
+           <lightning:input label="File Name"   type="text" name="fileNameInput" aura:id="fileNameInput" value="{!v.fileName}" />
+       </aura:if>
+    	<br/>
+       <button class="slds-button slds-button_neutral" onclick="{!c.uploadPhoto}">Confirm</button>
+
+     </aura:if>   
+
+    <aura:if isTrue="{!v.newfile}">
+        <lightning:formattedText value="SuccessFully Uploaded! You want to upload another File!" class="custom-color"/>
+        <br/><br/>
+        <button class="slds-button slds-button_neutral" onclick="{!c.refreshcmp}">New File</button>  
+        <button class="slds-button slds-button_neutral" onclick="{!c.cancel}">Cancel</button>   
+    </aura:if>
+    
+</aura:component>
