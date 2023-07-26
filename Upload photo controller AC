@@ -1,0 +1,100 @@
+({
+
+    handleFileChange: function(component, event, helper) {
+        var fileInput = component.find("fileInput").get("v.files")	;
+        var file = fileInput[0];
+        var compressedDataUrl;
+        component.set("v.fileName", file.name);
+        component.set("v.fileType", file.type);
+        
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            if(file.type == 'image/jpeg' || file.type =='image/png' || file.type =='image/gif'){
+            var image = new Image();
+            image.src = e.target.result;
+            image.onload = function() {
+                var canvas = document.createElement("canvas");
+                var maxWidth = 800; // Set the desired maximum width
+                var maxHeight = 600; // Set the desired maximum height
+                var width = image.width;
+                var height = image.height;
+                
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height *= maxWidth / width;
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxHeight) {
+                        width *= maxHeight / height;
+                        height = maxHeight;
+                    }
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                
+                var context = canvas.getContext("2d");
+                context.drawImage(image, 0, 0, width, height);
+               
+                 compressedDataUrl = canvas.toDataURL(file.type, 0.7); // Set the desired compression quality
+                 component.set("v.compressedImageData", compressedDataUrl);
+                console.log('--compressedDataUrl--'+compressedDataUrl); 
+            };
+                
+            }
+            else{
+                //var fileContents = e.target.result;
+                console.log('---File type---'+file.type);
+                compressedDataUrl =e.target.result;
+                component.set("v.compressedImageData", compressedDataUrl);
+            }
+                // Store the compressed image data in a component attribute
+                
+                console.log('--compressedImageData--'+component.get("v.compressedImageData")); 
+        };
+             reader.readAsDataURL(file);
+        
+       
+    },
+    
+        refreshcmp: function(component, event, helper) {
+            var newfile = false;
+            component.set("v.newfile",false);
+            $A.get('e.force:refreshView').fire();           
+        },  
+        cancel: function(component, event, helper) {
+            var navEvt = $A.get("e.force:navigateToSObject");
+            navEvt.setParams({
+                "recordId": component.get("v.recordId"),
+                "slideDevName": "related"
+            });
+            navEvt.fire();          
+        },  
+
+        uploadPhoto: function(component, event, helper) {
+            var compressedImageData = component.get("v.compressedImageData");
+             
+            // Pass the compressed image data to Salesforce to create an Attachment record
+            var action = component.get("c.createJobsheetAttachment");
+            action.setParams({
+                recordId: component.get("v.recordId"), // Replace with the appropriate  Id
+                fileName: component.get("v.fileName"), // Provide a desired file name
+                fileData: compressedImageData.split(',')[1], // Extract the base64-encoded file data
+                filetype: component.get("v.fileType")
+            });
+            
+            action.setCallback(this, function(response) {
+                // Handle the server-side response as needed
+                var state = response.getState();
+                if (state === "SUCCESS") {
+                     var newfile = true;
+                     component.set("v.newfile",newfile);            
+                } else {
+                    // Handle errors
+                }
+            });
+            
+            $A.enqueueAction(action);
+    }
+})
